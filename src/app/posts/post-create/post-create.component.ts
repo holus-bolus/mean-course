@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Post } from '../post.model';
-import { NgForm } from '@angular/forms';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { PostsService } from '../posts.service';
 import { ActivatedRoute } from '@angular/router';
 
@@ -16,17 +16,17 @@ export class PostCreateComponent implements OnInit {
   private mode: string = 'create';
   private postId: any;
   post: Post | any;
+  form: FormGroup;
   isLoading = false;
 
   // @Output() postCreated = new EventEmitter<Post>();
-
   constructor(
     public postsService: PostsService,
     public activatedRoute: ActivatedRoute
   ) {}
 
-  onSavePost(form: NgForm) {
-    if (form.invalid) {
+  onSavePost() {
+    if (this.form.invalid) {
       return;
     }
     this.isLoading = true;
@@ -38,19 +38,29 @@ export class PostCreateComponent implements OnInit {
     // };
     // this.postCreated.emit(post);
     if (this.mode === 'create') {
-      this.postsService.addPosts(form.value.title, form.value.content);
+      this.postsService.addPosts(
+        this.form.value.title,
+        this.form.value.content
+      );
     } else {
       this.postsService.updatePost(
         this.postId,
-        form.value.title,
-        form.value.content
+        this.form.value.title,
+        this.form.value.content
       );
     }
 
-    form.resetForm();
+    this.form.reset();
   }
 
   ngOnInit() {
+    this.form = new FormGroup({
+      title: new FormControl(null, {
+        validators: [Validators.required, Validators.minLength(3)],
+      }),
+      content: new FormControl(null, { validators: [Validators.required] }),
+      image: new FormControl(null, { validators: [Validators.required] }),
+    });
     this.activatedRoute.paramMap.subscribe((paramMap) => {
       if (paramMap.has('id')) {
         this.mode = 'edit';
@@ -62,6 +72,10 @@ export class PostCreateComponent implements OnInit {
             title: postData.title,
             content: postData.content,
           };
+          this.form.setValue({
+            title: this.post.title,
+            content: this.post.content,
+          });
         });
         this.isLoading = false;
         // this.post = this.postsService.getSinglePost(this.postId);
@@ -70,5 +84,11 @@ export class PostCreateComponent implements OnInit {
         this.postId = null;
       }
     });
+  }
+
+  onImagePicked(event: Event) {
+    const file = (event.target as HTMLInputElement).files;
+    this.form.patchValue({ image: file });
+    this.form.get('image').updateValueAndValidity();
   }
 }
