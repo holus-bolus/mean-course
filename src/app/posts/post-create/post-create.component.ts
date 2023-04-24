@@ -18,6 +18,7 @@ export class PostCreateComponent implements OnInit {
   post: Post | any;
   form: FormGroup;
   isLoading = false;
+  imagePreview: any;
 
   // @Output() postCreated = new EventEmitter<Post>();
   constructor(
@@ -87,8 +88,13 @@ export class PostCreateComponent implements OnInit {
   }
 
   onImagePicked(event: Event) {
-    const file = (event.target as HTMLInputElement).files;
-    this.form.patchValue({ image: file });
+    const file: any = (event.target as HTMLInputElement).files;
+    this.form.patchValue({ image: file as Blob });
     this.form.get('image').updateValueAndValidity();
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.imagePreview = reader.result;
+    };
+    reader.readAsDataURL(file);
   }
 }
