@@ -3,6 +3,7 @@ import { Post } from '../post.model';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { PostsService } from '../posts.service';
 import { ActivatedRoute } from '@angular/router';
+import { mimeType } from './mime-type.validator';
 
 @Component({
   selector: 'app-post-create',
@@ -60,7 +61,10 @@ export class PostCreateComponent implements OnInit {
         validators: [Validators.required, Validators.minLength(3)],
       }),
       content: new FormControl(null, { validators: [Validators.required] }),
-      image: new FormControl(null, { validators: [Validators.required] }),
+      image: new FormControl(null, {
+        validators: [Validators.required],
+        asyncValidators: [mimeType],
+      }),
     });
     this.activatedRoute.paramMap.subscribe((paramMap) => {
       if (paramMap.has('id')) {
@@ -88,8 +92,8 @@ export class PostCreateComponent implements OnInit {
   }
 
   onImagePicked(event: Event) {
-    const file: any = (event.target as HTMLInputElement).files;
-    this.form.patchValue({ image: file as Blob });
+    const file: any = (event.target as HTMLInputElement).files[0];
+    this.form.patchValue({ image: file });
     this.form.get('image').updateValueAndValidity();
     const reader = new FileReader();
     reader.onload = () => {
